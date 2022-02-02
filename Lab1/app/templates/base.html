@@ -7,15 +7,24 @@
         {% else %}
         <title>Welcome to the Online Album</title>
         {% endif %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     </head>
+
     <body>
-        <div>
-            Online Album:
-            <a href="/index">Home</a>
-            <a href="/login">Login</a>
-            <a href="/register">Register Now!</a>
-        </div>
-        <hr>
+        <header>
+            <div class="container">
+                <h1 class="logo">Online Album</h1>
+                <strong><nav><ul class="menu">
+                    {% if user.login %}
+                    <li>Hello, {{user.username}}</li>
+                    <li><a href="/logout">Logout</a></li>
+                    {% else %}
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register Now!</a></li>
+                    {% endif %}
+                </ul></nav></strong>
+            </div>
+        </header>
         {% block content %}{% endblock %}
     </body>
 </html>
