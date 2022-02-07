@@ -1,9 +1,9 @@
-from app import app
+from app import backendapp, memcache, memcache_stat
 from flask import render_template
 
 
-@app.route('/')
-@app.route('/index')
+@backendapp.route('/')
+@backendapp.route('/index')
 def index():
     user = {
         'username': 'John',
