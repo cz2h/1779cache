@@ -1,6 +1,6 @@
 import os, base64
-from app import backendapp, memcache, memcache_stat, url_for, request, flash, redirect, send_from_directory, json, jsonify
-from flask import render_template
+from app import backendapp, memcache, memcache_stat
+from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from db_access import update_db_key_list, get_db
 from memcache_access import get_memcache
 from werkzeug.utils import secure_filename
