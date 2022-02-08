@@ -1,4 +1,5 @@
-from app import memcache, memcache_stat
+import os
+from app import backendapp, memcache, memcache_stat
 from db_access import update_db_key_list, get_db_filename
 from datetime import datetime
 
@@ -18,7 +19,7 @@ def add_memcache(key, filename):
         if key in memcache.keys():
             print('Key found in MemCache! Deleting the old file ', memcache[key]['filename'])
             # if the key existed in Memcache delete the old file
-            os.remove(os.path.join(webapp.config['IMG_FOLDER'], memcache[key]['filename']))
+            os.remove(os.path.join(backendapp.config['IMG_FOLDER'], memcache[key]['filename']))
             # Update memcache statistic, hit++, total request++, hit_rate++
             update_memcache_stat(missed=False)
             memcache[key]['filename'] = filename
