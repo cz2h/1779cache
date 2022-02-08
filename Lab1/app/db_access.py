@@ -47,3 +47,16 @@ def update_db_key_list(key, filename):
         cursor.execute(query, (filename, key))
         cnx.commit()
         print('Key found in DB! Updating new file name ', filename)
+
+# get the corresponded file name of a given key from database
+def get_db_filename(key):
+    cnx = get_db()  # Create connection to db
+    cursor = cnx.cursor()
+    query = "SELECT filename FROM Assignment_1.key_list WHERE uniquekey = %s;"
+    cursor.execute(query, (key,))
+    row = cursor.fetchone()  # Retrieve the first row that contains the key
+    # Check if database has the key
+    if row is None:  # Key is not in database, add new entry
+        print('No key found in DB!')
+    else:  # The given key is in database, update existing item
+        return row[0]
