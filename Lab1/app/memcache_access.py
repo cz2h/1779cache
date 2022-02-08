@@ -1,5 +1,5 @@
 from app import memcache, memcache_stat
-from db_access import update_db_key_list
+from db_access import update_db_key_list, get_db_filename
 from datetime import datetime
 
 def update_memcache_stat(missed):
@@ -10,6 +10,7 @@ def update_memcache_stat(missed):
     memcache_stat['total'] += 1
     memcache_stat['mis_rate'] = memcache_stat['mis'] / memcache_stat['total']
     memcache_stat['hit_rate'] = memcache_stat['hit'] / memcache_stat['total']
+
 
 # Update the memcache and related statistic, request access to database when a miss happened
 def add_memcache(key, filename):
@@ -31,3 +32,9 @@ def add_memcache(key, filename):
 
     else:
         print('Error: Missing the key or file name!')
+
+
+# Update the memcache entry
+def update_memcache(key, filename):
+    if (key is not None) and (filename is not None):
+        memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
