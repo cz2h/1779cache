@@ -38,3 +38,23 @@ def add_memcache(key, filename):
 def update_memcache(key, filename):
     if (key is not None) and (filename is not None):
         memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
+
+
+# Get the corresponded file name with a given key in memcache
+# It calls database if a memcache happened
+def get_memcache(key):
+    if key is not None:
+        if key in memcache.keys():
+            # memcache hit, update statistic
+            update_memcache_stat(missed=False)
+            return memcache[key]['filename']
+        else:
+            # memcache miss, update statistic
+            update_memcache_stat(missed=True)
+            # check database
+            filename = get_db_filename(key)
+            # add entry back to memcache
+            update_memcache(key, filename)
+            return filename
+    else:
+        return None
