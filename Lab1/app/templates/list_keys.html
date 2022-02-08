@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MemCache Entries</title>
+    <table style="width:100%">
+        <tr>
+            <th>Key</th>
+            <th>File Name</th>
+            <th>Options</th>
+        </tr>
+        {%for row in rows:%}
+        <tr>
+            <th>{{row[1]}}</th>
+            <th>{{row[2]}}</th>
+            <th>
+                <form action="{{url_for('download_file', name=row[2])}}" method="post">
+                    <input type="submit" value="view" />
+                </form>
+            </th>
+        </tr>
+        {%endfor%}
+    </table>
+</head>
+<body>
+
+</body>
+</html>

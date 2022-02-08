@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MemCache Entries</title>
+</head>
+<body>
+<h1>Memcache Statistic</h1>
+    <table style="width:50%">
+        <tr>
+            <th>Miss Count</th>
+            <th>Hit Count</th>
+            <th>Total Request</th>
+            <th>Miss Rate</th>
+            <th>Hit Rate</th>
+        </tr>
+        <tr>
+            <th>{{memcache_stat['mis']}}</th>
+            <th>{{memcache_stat['hit']}}</th>
+            <th>{{memcache_stat['total']}}</th>
+            <th>{{memcache_stat['mis_rate']}}</th>
+            <th>{{memcache_stat['hit_rate']}}</th>
+        </tr>
+    </table>
+<h2>Content</h2>
+    <table style="width:50%">
+        <tr>
+            <th>Key</th>
+            <th>File Name</th>
+            <th>Request Time</th>
+            <th>Options</th>
+        </tr>
+        {%for key in memcache:%}
+        <tr>
+            <th>{{key}}</th>
+            <th>{{memcache[key]['filename']}}</th>
+            <th>{{memcache[key]['timestamp']}}</th>
+            <th>
+                <form action="{{url_for('download_file', name=memcache[key]['filename'])}}" method="post">
+                    <input type="submit" value="view" />
+                </form>
+            </th>
+        </tr>
+        {%endfor%}
+    </table>
+</body>
+</html>
