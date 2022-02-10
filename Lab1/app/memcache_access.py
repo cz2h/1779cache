@@ -1,7 +1,8 @@
 import os
 from app import backendapp, memcache, memcache_stat
-from db_access import update_db_key_list, get_db_filename
+from app.db_access import update_db_key_list, get_db_filename
 from datetime import datetime
+
 
 def update_memcache_stat(missed):
     if missed is True:
@@ -18,8 +19,8 @@ def add_memcache(key, filename):
     if (key is not None) and (filename is not None):
         if key in memcache.keys():
             print('Key found in MemCache! Deleting the old file ', memcache[key]['filename'])
-            # if the key existed in Memcache delete the old file
-            os.remove(os.path.join(backendapp.config['IMG_FOLDER'], memcache[key]['filename']))
+            # if the key existed in Memcache delete the old image file
+            os.remove(os.path.join(backendapp.config['IMAGE_PATH'], memcache[key]['filename']))
             # Update memcache statistic, hit++, total request++, hit_rate++
             update_memcache_stat(missed=False)
             memcache[key]['filename'] = filename
@@ -32,7 +33,7 @@ def add_memcache(key, filename):
             memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
 
     else:
-        print('Error: Missing the key or file name!')
+        print('Error add_memcache: Missing the key or file name!')
 
 
 # Update the memcache entry
@@ -44,18 +45,19 @@ def update_memcache(key, filename):
 # Get the corresponded file name with a given key in memcache
 # It calls database if a memcache happened
 def get_memcache(key):
-    if key is not None:
-        if key in memcache.keys():
-            # memcache hit, update statistic
-            update_memcache_stat(missed=False)
-            return memcache[key]['filename']
-        else:
-            # memcache miss, update statistic
-            update_memcache_stat(missed=True)
-            # check database
-            filename = get_db_filename(key)
-            # add entry back to memcache
-            update_memcache(key, filename)
-            return filename
-    else:
+    if key is None:
         return None
+
+    if key in memcache.keys():
+        # memcache hit, update statistic
+        update_memcache_stat(missed=False)
+        return memcache[key]['filename']
+    else:
+        # memcache miss, update statistic
+        update_memcache_stat(missed=True)
+        # check database
+        filename = get_db_filename(key)
+        # add entry back to memcache
+        update_memcache(key, filename)
+        return filename
+

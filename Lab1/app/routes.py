@@ -1,10 +1,10 @@
 import os, base64
 from app import backendapp, memcache, memcache_stat
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
-from db_access import update_db_key_list, get_db
-from memcache_access import get_memcache
+from app.db_access import update_db_key_list, get_db
+from app.memcache_access import get_memcache, add_memcache
 from werkzeug.utils import secure_filename
-from memcache_access import add_memcache
+from config import Config
 
 
 # Check if uploaded file extension is acceptable
@@ -28,7 +28,7 @@ def main():
 def list_keys():
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
-    query = "SELECT * FROM Assignment_1.key_list"
+    query = "SELECT * FROM Assignment_1.keylist"
     cursor.execute(query)
     rows = cursor.fetchall()  # Retrieve the first row that contains the key
     return render_template("list_keys.html", rows=rows)
@@ -38,7 +38,7 @@ def list_keys():
 def list_keys_api():
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
-    query = "SELECT uniquekey FROM Assignment_1.key_list"
+    query = "SELECT uniquekey FROM Assignment_1.keylist"
     cursor.execute(query)
     rows = cursor.fetchall()  # Retrieve the first row that contains the key
     result = []
@@ -65,16 +65,18 @@ def image_upload():
             flash('No file part')
             return redirect(request.url)
         file = request.files['file']
+        print('filename = '+str(file))
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
+        # Main upload logic
         if file and allowed_file(file.filename):
             key = request.form.get('key')
             filename = secure_filename(file.filename)
+            file.save(os.path.join(backendapp.config['IMAGE_PATH'], filename))  # write to local file system
             add_memcache(key, filename)  # add the key and file name to cache as well as database
-            file.save(os.path.join(backendapp.config['IMG_FOLDER'], filename))
             return redirect(url_for('download_file', name=filename))
     return render_template("upload.html")
 
@@ -84,16 +86,15 @@ def download_file(name):
     if request.method == 'GET':
         root_dir = os.path.dirname(os.getcwd())
         print(name)
-        return send_from_directory(os.path.join(root_dir, 'MemCacheExample', 'image_library'), name)
+        return send_from_directory(os.path.join(root_dir, 'Lab1', 'image_library'), name)
+
 
 @backendapp.route('/api/key/<key_value>', methods=['POST'])
-def send_image_api():
-    key = request.form.get('key_value')
+def send_image_api(key_value):
     root_dir = os.path.dirname(os.getcwd())
-    filename = get_memcache(key)
-    with open(os.path.join(root_dir, 'MemCacheExample', 'image_library', filename), 'rb') as binary_file:
-        binary_data = binary_file.read()
-        base64_data = base64.b64encode(binary_data)
+    filename = get_memcache(key_value)
+    with open(os.path.join(root_dir, 'Lab1', 'image_library', filename), 'rb') as binary_file:
+        base64_data = base64.b64encode(binary_file.read())
         base64_msg = base64_data.decode('utf-8')
 
     return jsonify(
