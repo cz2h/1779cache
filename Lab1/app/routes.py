@@ -73,6 +73,27 @@ def list_keys_memcache():
     return render_template("list_keys_memcache.html", memcache=memcache, memcache_stat=memcache_stat)
 
 
+@backendapp.route('/put', methods=['POST'])
+def put():
+    key = request.form.get('key')
+    filename = request.form.get('value')
+    if (key is not None) and (filename is not None):
+        add_memcache(key, filename)
+        response = backendapp.response_class(
+            response=json.dumps("OK"),
+            status=200,
+            mimetype='application/json'
+        )
+    else:
+        response = backendapp.response_class(
+            response=json.dumps("Bad Request"),
+            status=400,
+            mimetype='application/json'
+        )
+
+    return response
+
+
 @backendapp.route('/upload', methods=['GET', 'POST'])
 def image_upload():
     if request.method == 'POST':
