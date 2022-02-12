@@ -23,7 +23,7 @@ def get_memcache_config():
     if row is not None:
         memcache_config['capacity'] = row[0]
         memcache_config['rep_policy'] = row[1]
-        print('Configuration is found in database, capacity:', row[0], 'MB,', row[1])
+        print('Configuration is found in database, capacity:', row[0], 'Byte,', row[1])
     else:
         memcache_config['capacity'] = 10
         memcache_config['rep_policy'] = 'RANDOM'
