@@ -4,6 +4,7 @@ from app.db_access import update_db_key_list, get_db_filename
 from datetime import datetime
 
 
+# Update the memcache statistic data
 def update_memcache_stat(missed):
     if missed is True:
         memcache_stat['mis'] += 1
@@ -19,7 +20,7 @@ def add_memcache(key, filename):
     if (key is not None) and (filename is not None):
         if key in memcache.keys():
             print('Key found in MemCache! Deleting the old file ', memcache[key]['filename'])
-            # if the key existed in Memcache delete the old image file
+            # If the key existed in Memcache delete the old image file
             os.remove(os.path.join(backendapp.config['IMAGE_PATH'], memcache[key]['filename']))
             # Update memcache statistic, hit++, total request++, hit_rate++
             update_memcache_stat(missed=False)
@@ -49,8 +50,9 @@ def get_memcache(key):
         return None
 
     if key in memcache.keys():
-        # memcache hit, update statistic
+        # memcache hit, update statistic and request time
         update_memcache_stat(missed=False)
+        memcache[key]['timestamp'] = datetime.now()
         return memcache[key]['filename']
     else:
         # memcache miss, update statistic
