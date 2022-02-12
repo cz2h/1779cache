@@ -4,13 +4,14 @@ from app.db_access import update_db_key_list, get_db_filename
 from datetime import datetime
 
 
-def get_memcache_size(obj):
+# Return the size of a given object
+def get_object_size(obj):
     marked = {id(obj)}
     obj_q = [obj]
-    sz = 0
+    size = 0
 
     while obj_q:
-        sz += sum(map(sys.getsizeof, obj_q))
+        size += sum(map(sys.getsizeof, obj_q))
         all_refr = ((id(o), o) for o in gc.get_referents(*obj_q))
 
         # Filter object that are already marked.
@@ -21,7 +22,17 @@ def get_memcache_size(obj):
         obj_q = new_refr.values()
         marked.update(new_refr.keys())
 
-    return sz
+    return size
+
+
+# Quick estimation to the size of new entry
+def get_entry_size(key, filename):
+    entry = {
+        'key': key,
+        'filename': filename,
+        'timestamp': datetime.now()
+    }
+    return get_object_size(entry)
 
 
 # Random Replacment Policy
@@ -31,6 +42,8 @@ def random_replace_memcache(key, filename):
     memcache.pop(thechosenone)
     # Add the new entry
     memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
+    # Update the size after replacement
+    memcache_stat['size'] = get_object_size(memcache)
 
 
 # LRU Replacement Policy
@@ -43,6 +56,8 @@ def lru_replace_memcache(key, filename):
             print('Key', key, 'found!')
             memcache.pop(key)
     memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
+    # Update the size after replacement
+    memcache_stat['size'] = get_object_size(memcache)
 
 
 # Update the memcache statistic data
@@ -55,12 +70,13 @@ def update_memcache_stat(missed):
     memcache_stat['mis_rate'] = memcache_stat['mis'] / memcache_stat['total']
     memcache_stat['hit_rate'] = memcache_stat['hit'] / memcache_stat['total']
     # Calculate the current memcache size
-    memcache_stat['size'] = get_memcache_size(memcache)
+    memcache_stat['size'] = get_object_size(memcache)
 
 
 # Update the memcache and related statistic, request access to database when a miss happened
 def add_memcache(key, filename):
     if (key is not None) and (filename is not None):
+        new_entry_size = get_object_size({''})
         if key in memcache.keys():
             print('Key found in MemCache! Deleting the old file ', memcache[key]['filename'])
             # If the key existed in Memcache delete the old image file
@@ -70,11 +86,15 @@ def add_memcache(key, filename):
             memcache[key]['filename'] = filename
             memcache[key]['timestamp'] = datetime.now()
             update_db_key_list(key, filename)  # Update the database as well
-        elif memcache_stat['size'] < memcache_config['capacity']:
+            # Update the size after replacement
+            memcache_stat['size'] = get_object_size(memcache)
+        elif memcache_stat['size'] < memcache_config['capacity'] - get_entry_size(key, filename):
             # if the key isn't in memcache and memcache is not full, miss++, check Database
             update_db_key_list(key, filename)
             update_memcache_stat(missed=True)
             memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
+            # Update the size after replacement
+            memcache_stat['size'] = get_object_size(memcache)
         else:
             # if the key isn't in memcache and memcache is full call the replacement routine
             print('MemCache is Full! Call for replacement routine!')
@@ -87,12 +107,14 @@ def add_memcache(key, filename):
         print('Error add_memcache: Missing the key or file name!')
 
 
-# Update the memcache entry
+# Update the memcache entry after a miss
 def update_memcache(key, filename):
     if (key is not None) and (filename is not None):
         # Check the space of memcache before update it
-        if memcache_stat['size'] < memcache_config['capacity']:
+        if memcache_stat['size'] < memcache_config['capacity'] - get_entry_size(key, filename):
             memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
+            # Update the size after replacement
+            memcache_stat['size'] = get_object_size(memcache)
         else:
             print('MemCache is Full! Call for replacement routine!')
             if memcache_config['rep_policy'] == 'RANDOM':
