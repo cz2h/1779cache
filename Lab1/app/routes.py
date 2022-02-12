@@ -1,5 +1,5 @@
 import os, base64
-from app import backendapp, memcache, memcache_stat
+from app import backendapp, memcache, memcache_stat, memcache_config
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from app.db_access import update_db_key_list, get_db
 from app.memcache_access import get_memcache, add_memcache
@@ -12,6 +12,22 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in backendapp.config['ALLOWED_FORMAT']
 
+
+@backendapp.before_first_request
+def get_memcache_config():
+    cnx = get_db()  # Create connection to db
+    cursor = cnx.cursor()
+    query = "SELECT * FROM Assignment_1.memcache_config"
+    cursor.execute(query)
+    row = cursor.fetchone()  # Retrieve the first row that contains the configuration
+    if row is not None:
+        memcache_config['capacity'] = row[0]
+        memcache_config['rep_policy'] = row[1]
+        print('Configuration is found in database, capacity:', row[0], 'MB,', row[1])
+    else:
+        memcache_config['capacity'] = 10
+        memcache_config['rep_policy'] = 'RANDOM'
+        print('No configuration is not found in database, switch to default configuration')
 
 @backendapp.route('/', methods=['POST', 'GET'])
 @backendapp.route('/index', methods=['POST'])
@@ -83,10 +99,9 @@ def image_upload():
 
 @backendapp.route('/uploaded/<name>', methods=['GET', 'POST'])
 def download_file(name):
-    if request.method == 'GET':
-        root_dir = os.path.dirname(os.getcwd())
-        print(name)
-        return send_from_directory(os.path.join(root_dir, 'Lab1', 'image_library'), name)
+    root_dir = os.path.dirname(os.getcwd())
+    print(name)
+    return send_from_directory(os.path.join(root_dir, 'Lab1', 'image_library'), name)
 
 
 @backendapp.route('/api/key/<key_value>', methods=['POST'])
