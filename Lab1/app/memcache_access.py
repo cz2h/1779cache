@@ -143,3 +143,17 @@ def get_memcache(key):
         update_memcache(key, filename)
         return filename
 
+
+# Drop all entries from the memcache
+def clr_memcache():
+    memcache.clear()
+    # Update the size after replacement
+    memcache_stat['size'] = get_object_size(memcache)
+    print('memcache is cleared!')
+
+# Delete a given key from memcache
+def del_memcache(key):
+    if key is not None:
+        memcache.pop(key)
+        # Update the size after replacement
+        memcache_stat['size'] = get_object_size(memcache)
