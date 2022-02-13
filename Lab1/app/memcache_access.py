@@ -157,7 +157,7 @@ def clr_memcache():
 
 # Delete a given key from memcache
 def del_memcache(key):
-    if key is not None:
+    if (key is not None) and (key in memcache.keys()):
         memcache.pop(key)
         # Update the size after replacement
         memcache_stat['size'] = get_object_size(memcache)
