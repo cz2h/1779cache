@@ -1,7 +1,7 @@
 import mysql.connector
 from mysql.connector import errorcode
 from flask import g
-from app import backendapp
+from app import backendapp, memcache_config
 
 
 # initiate connection to database
@@ -63,3 +63,18 @@ def get_db_filename(key):
         return None
     else:  # The given key is in database, update existing item
         return row[0]
+
+def get_db_memcache_config():
+    cnx = get_db()  # Create connection to db
+    cursor = cnx.cursor()
+    query = "SELECT * FROM Assignment_1.memcache_config"
+    cursor.execute(query)
+    row = cursor.fetchone()  # Retrieve the first row that contains the configuration
+    if row is not None:
+        memcache_config['capacity'] = row[0]
+        memcache_config['rep_policy'] = row[1]
+        print('Configuration is found in database, capacity:', row[0], 'Byte,', row[1])
+    else:
+        memcache_config['capacity'] = 10
+        memcache_config['rep_policy'] = 'RANDOM'
+        print('No configuration is not found in database, switch to default configuration')
