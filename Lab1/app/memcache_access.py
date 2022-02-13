@@ -37,9 +37,11 @@ def get_entry_size(key, filename):
 
 # Random Replacment Policy
 def random_replace_memcache(key, filename):
-    # Randomly chose one key to drop from memcache
-    thechosenone = random.choice(list(memcache.keys()))
-    memcache.pop(thechosenone)
+    # Check if memcache is empty
+    if bool(memcache):
+        # Randomly chose one key to drop from memcache
+        thechosenone = random.choice(list(memcache.keys()))
+        memcache.pop(thechosenone)
     # Add the new entry
     memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
     # Update the size after replacement
@@ -48,13 +50,15 @@ def random_replace_memcache(key, filename):
 
 # LRU Replacement Policy
 def lru_replace_memcache(key, filename):
-    # Get the LRU timestamp
-    oldest_timestamp = min([d['timestamp'] for d in memcache.values()])
-    # Find the key by value
-    for key in memcache.keys():
-        if(memcache[key]['timestamp'] == oldest_timestamp):
-            print('Key', key, 'found!')
-            memcache.pop(key)
+    # Check if memcache is empty
+    if bool(memcache):
+        # Get the LRU timestamp
+        oldest_timestamp = min([d['timestamp'] for d in memcache.values()])
+        # Find the key by value
+        for key in memcache.keys():
+            if(memcache[key]['timestamp'] == oldest_timestamp):
+                print('Key', key, 'found!')
+                memcache.pop(key)
     memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
     # Update the size after replacement
     memcache_stat['size'] = get_object_size(memcache)
