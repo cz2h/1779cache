@@ -72,7 +72,7 @@ def list_keys_memcache():
     # Retrieve all available keys from database
     return render_template("list_keys_memcache.html", memcache=memcache, memcache_stat=memcache_stat)
 
-
+# Put function required by frontend
 @backendapp.route('/put', methods=['POST'])
 def put():
     key = request.form.get('key')
@@ -87,6 +87,27 @@ def put():
     else:
         response = backendapp.response_class(
             response=json.dumps("Bad Request"),
+            status=400,
+            mimetype='application/json'
+        )
+
+    return response
+
+
+# Get function required by frontend
+@backendapp.route('/get', methods=['POST'])
+def get():
+    key = request.form.get('key')
+    value = get_memcache(key)
+    if value is not None:
+        response = backendapp.response_class(
+            response=json.dumps(value),
+            status=200,
+            mimetype='application/json'
+        )
+    else:
+        response = backendapp.response_class(
+            response=json.dumps("Unknown key"),
             status=400,
             mimetype='application/json'
         )

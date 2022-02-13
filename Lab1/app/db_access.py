@@ -60,5 +60,6 @@ def get_db_filename(key):
     # Check if database has the key
     if row is None:  # Key is not in database, add new entry
         print('No key found in DB!')
+        return None
     else:  # The given key is in database, update existing item
         return row[0]
