@@ -2,7 +2,7 @@ import os, base64
 from app import backendapp, memcache, memcache_stat, memcache_config
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from app.db_access import update_db_key_list, get_db
-from app.memcache_access import get_memcache, add_memcache
+from app.memcache_access import get_memcache, add_memcache, get_object_size
 from werkzeug.utils import secure_filename
 from config import Config
 
@@ -109,6 +109,21 @@ def get():
         response = backendapp.response_class(
             response=json.dumps("Unknown key"),
             status=400,
+            mimetype='application/json'
+        )
+
+    return response
+
+
+# Clear function required by frontend
+@backendapp.route('/clear', methods=['POST'])
+def clear():
+    memcache.clear()
+    # Update the size after replacement
+    memcache_stat['size'] = get_object_size(memcache)
+    response = backendapp.response_class(
+            response=json.dumps("OK"),
+            status=200,
             mimetype='application/json'
         )
 
