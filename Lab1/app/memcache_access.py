@@ -1,6 +1,6 @@
 import os, random, sys, gc
 from app import backendapp, memcache, memcache_stat, memcache_config
-from app.db_access import update_db_key_list, get_db_filename
+from app.db_access import update_db_key_list, get_db_filename, get_db
 from datetime import datetime
 
 
@@ -35,7 +35,7 @@ def get_entry_size(key, filename):
     return get_object_size(entry)
 
 
-# Random Replacment Policy
+# Random Replacement Policy
 def random_replace_memcache(key, filename):
     # Check if memcache is empty
     if bool(memcache):
@@ -55,10 +55,10 @@ def lru_replace_memcache(key, filename):
         # Get the LRU timestamp
         oldest_timestamp = min([d['timestamp'] for d in memcache.values()])
         # Find the key by value
-        for key in memcache.keys():
-            if(memcache[key]['timestamp'] == oldest_timestamp):
-                print('Key', key, 'found!')
-                memcache.pop(key)
+        for mem_key in memcache.keys():
+            if memcache[mem_key]['timestamp'] == oldest_timestamp:
+                print('Key', mem_key, 'found!')
+                memcache.pop(mem_key)       # changed variable name b/c 'key' is confusing
     memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
     # Update the size after replacement
     memcache_stat['size'] = get_object_size(memcache)
@@ -155,9 +155,40 @@ def clr_memcache():
     memcache_stat['size'] = get_object_size(memcache)
     print('memcache is cleared!')
 
+
 # Delete a given key from memcache
 def del_memcache(key):
     if (key is not None) and (key in memcache.keys()):
         memcache.pop(key)
         # Update the size after replacement
         memcache_stat['size'] = get_object_size(memcache)
+
+
+# Called by run.py threading directly
+def store_stats():
+    """Function stores the state of memcache including number of items
+    in cache, total size of items in cache, numbers of requests served,
+    and miss/hit rate.
+    :argument: None
+
+    :return: None
+    """
+    # Get the number of items in cache
+    nums_item = memcache_stat['nums']
+
+    # Get the total size of images in cache
+    total_size = memcache_stat['size']
+    # Get the number of requests served
+    nums_req = memcache_stat['total']
+
+    # Get the miss/hit rate
+    mis_rate = memcache_stat['mis']
+    hit_rate = memcache_stat['hit']
+
+    # Store stats into the database by appending row
+    cnx = get_db()
+    cursor = cnx.cursor()
+    query = "INSERT INTO assignment_1.cache_stats (num_items, total_size, num_reqs, mis_rate, hit_rate)" \
+            "VALUES (%d, %d, %d, %d, %d);"
+    cursor.execute(query, (nums_item, total_size, nums_req, mis_rate, hit_rate))
+    cnx.commit()

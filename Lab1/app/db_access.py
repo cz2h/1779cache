@@ -64,6 +64,7 @@ def get_db_filename(key):
     else:  # The given key is in database, update existing item
         return row[0]
 
+
 def get_db_memcache_config():
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
@@ -73,8 +74,8 @@ def get_db_memcache_config():
     if row is not None:
         memcache_config['capacity'] = row[0]
         memcache_config['rep_policy'] = row[1]
-        print('Configuration is found in database, capacity:', row[0], 'Byte,', row[1])
-    else:
+        print('Configuration is found in database, capacity:', row[0], 'MB,', row[1])
+    else:  # default
         memcache_config['capacity'] = 10
         memcache_config['rep_policy'] = 'RANDOM'
         print('No configuration is not found in database, switch to default configuration')

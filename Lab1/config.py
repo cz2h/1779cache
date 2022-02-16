@@ -8,7 +8,7 @@ class Config(object):
 
     DB_CONFIG = {
         'user': 'root',
-        'password': '',
+        'password': 'Actonwang29',
         'host': 'localhost',
         'database': 'assignment_1'
     }

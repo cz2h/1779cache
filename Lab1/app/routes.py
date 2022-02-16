@@ -48,6 +48,13 @@ def list_keys_api():
     cursor.execute(query)
     rows = cursor.fetchall()  # Retrieve the first row that contains the key
     result = []
+    if not rows:
+        return jsonify(
+            success="false",
+            error={
+                'code': 501,
+                'message': 'No file found error in list_keys_api.'}
+        )
     # Flatten the list is required
     for row in rows:
         result.append(row[0])
@@ -61,6 +68,7 @@ def list_keys_api():
 def list_keys_memcache():
     # Retrieve all available keys from database
     return render_template("list_keys_memcache.html", memcache=memcache, memcache_stat=memcache_stat)
+
 
 # Put function required by frontend
 @backendapp.route('/put', methods=['POST'])
@@ -110,10 +118,10 @@ def get():
 def clear():
     clr_memcache()
     response = backendapp.response_class(
-            response=json.dumps("OK"),
-            status=200,
-            mimetype='application/json'
-        )
+        response=json.dumps("OK"),
+        status=200,
+        mimetype='application/json'
+    )
 
     return response
 
@@ -143,10 +151,10 @@ def invalidatekey():
 def refreshconfiguration():
     get_db_memcache_config()
     response = backendapp.response_class(
-            response=json.dumps("OK"),
-            status=200,
-            mimetype='application/json'
-        )
+        response=json.dumps("OK"),
+        status=200,
+        mimetype='application/json'
+    )
     return response
 
 
@@ -158,7 +166,7 @@ def image_upload():
             flash('No file part')
             return redirect(request.url)
         file = request.files['file']
-        print('filename = '+str(file))
+        print('filename = ' + str(file))
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == '':
@@ -185,9 +193,18 @@ def download_file(name):
 def send_image_api(key_value):
     root_dir = os.path.dirname(os.getcwd())
     filename = get_memcache(key_value)
-    with open(os.path.join(root_dir, 'Lab1', 'image_library', filename), 'rb') as binary_file:
-        base64_data = base64.b64encode(binary_file.read())
-        base64_msg = base64_data.decode('utf-8')
+    try:
+        with open(os.path.join(root_dir, 'Lab1', 'image_library', filename), 'rb') as binary_file:
+            base64_data = base64.b64encode(binary_file.read())
+            base64_msg = base64_data.decode('utf-8')
+    except:
+        return jsonify(
+            success="false",
+            error={
+                "code": 501,
+                "message": 'Error in retrieving '+key_value+'send_image_api'
+            }
+        )
 
     return jsonify(
         success='true',
