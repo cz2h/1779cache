@@ -12,6 +12,6 @@ def store_stats_thread():
 
 
 if __name__ == '__main__':
-    # x = threading.Thread(target=store_stats_thread())
-    # x.start()
+    x = threading.Thread(target=store_stats_thread())
+    x.start()
     backendapp.run(host='0.0.0.0', port=5001, debug=False)
