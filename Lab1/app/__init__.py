@@ -22,15 +22,6 @@ memcache_stat['size'] = 0
 
 scheduler = APScheduler()
 scheduler.init_app(backendapp)
-
-
-# define the job
-@scheduler.task('interval', id='update_memcache_state', seconds=10, misfire_grace_time=900)
-def job1():
-    print('Task is working according to the schedular!')
-    print('Current time is: ', datetime.now())
-
-
 scheduler.start()
 
 backendapp._static_folder = Config.IMAGE_PATH

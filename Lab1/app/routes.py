@@ -1,8 +1,8 @@
 import os, base64
-from app import backendapp, memcache, memcache_stat, memcache_config
+from app import backendapp, memcache, memcache_stat, memcache_config, scheduler
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from app.db_access import update_db_key_list, get_db, get_db_memcache_config
-from app.memcache_access import get_memcache, add_memcache, clr_memcache, del_memcache
+from app.memcache_access import get_memcache, add_memcache, clr_memcache, del_memcache, store_stats
 from werkzeug.utils import secure_filename
 from config import Config
 
@@ -18,6 +18,8 @@ def allowed_file(filename):
 def get_memcache_config():
     """ Get memcache configuration once at when the first request arrived"""
     get_db_memcache_config()
+    # add the task to scheduler for memcache statistic data updates
+    scheduler.add_job(id='update_memcache_state', func=store_stats, trigger='interval', seconds=10)
 
 
 @backendapp.route('/', methods=['POST', 'GET'])

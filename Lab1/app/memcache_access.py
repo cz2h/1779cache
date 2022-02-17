@@ -1,6 +1,6 @@
 import os, random, sys, gc
 from app import backendapp, memcache, memcache_stat, memcache_config
-from app.db_access import update_db_key_list, get_db_filename, get_db, get_db_filesize
+from app.db_access import update_db_key_list, get_db_filename, get_db, get_db_filesize, connect_to_database
 from datetime import datetime
 
 
@@ -166,22 +166,24 @@ def store_stats():
 
     :return: None
     """
+    print('Start update memcache status!')
     # Get the number of items in cache
-    nums_item = memcache_stat['nums']
+    num_items = memcache_stat['num']
 
     # Get the total size of images in cache
     total_size = memcache_stat['size']
     # Get the number of requests served
-    nums_req = memcache_stat['total']
+    num_reqs = memcache_stat['total']
 
     # Get the miss/hit rate
     mis_rate = memcache_stat['mis']
     hit_rate = memcache_stat['hit']
 
     # Store stats into the database by appending row
-    cnx = get_db()
+    cnx = connect_to_database()
     cursor = cnx.cursor()
-    query = "INSERT INTO assignment_1.cache_stats (num_items, total_size, num_reqs, mis_rate, hit_rate)" \
-            "VALUES (%d, %d, %d, %d, %d);"
-    cursor.execute(query, (nums_item, total_size, nums_req, mis_rate, hit_rate))
+    query = "INSERT INTO Assignment_1.cache_stats (num_items, total_size, num_reqs, mis_rate, hit_rate)" \
+            "VALUES (%s, %s, %s, %s, %s);"
+    cursor.execute(query, (num_items, total_size, num_reqs, mis_rate, hit_rate))
     cnx.commit()
+    print('Status Saved! Current time is: ', datetime.now())
