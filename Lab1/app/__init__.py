@@ -1,5 +1,7 @@
 from flask import Flask
+from flask_apscheduler import APScheduler
 from config import Config
+from datetime import datetime
 
 global memcache  # memcache
 global memcache_stat  # statistic of the memcache
@@ -18,8 +20,22 @@ memcache_stat['mis'] = 0
 memcache_stat['total'] = 0      # total number of requests served
 memcache_stat['size'] = 0
 
+scheduler = APScheduler()
+scheduler.init_app(backendapp)
+
+
+# define the job
+@scheduler.task('interval', id='update_memcache_state', seconds=10, misfire_grace_time=900)
+def job1():
+    print('Task is working according to the schedular!')
+    print('Current time is: ', datetime.now())
+
+
+scheduler.start()
+
 backendapp._static_folder = Config.IMAGE_PATH
 backendapp.config.from_object(Config)
+
 
 from app import routes
 
