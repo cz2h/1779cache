@@ -87,17 +87,22 @@ def add_memcache(key, filename, image_size):
     # Keep popping until we have enough space in memcache for the new image
     while memcache_stat['size'] + image_size > memcache_config['capacity']:
         replace_memcache()   # stats are updated inside
-
-    memcache[key]['filename'] = filename  # update/add it to memcache
-    memcache[key]['timestamp'] = datetime.now()
+    if key in memcache.keys():
+        memcache[key]['filename'] = filename  # update/add it to memcache
+        memcache[key]['timestamp'] = datetime.now()
+    else:
+        memcache[key] = {
+            'filename': filename,
+            'timestamp': datetime.now()
+        }
     # Insert file info to the database(auto-replace previous entry in DB)
-    update_db_key_list(key, filename)
+    update_db_key_list(key, filename, image_size)
     # Update the size after replacement(not updating 'num' b/c we are just replacing)
     memcache_stat['size'] += image_size
 
 
 # Get the corresponded file name with a given key in memcache
-# It calls database if a memcache happened
+# It calls database if a memcache miss happened
 def get_memcache(key):
     if key is None:
         return None
@@ -113,18 +118,25 @@ def get_memcache(key):
         # check database
         filename = get_db_filename(key)
         # add entry back to memcache
-        update_memcache(key, filename)
+        if filename is not None:
+            update_memcache(key, filename)
+        else:
+            print('Key is not found!')
         return filename
+
 
 
 # Update the memcache entry retrieved from database after a miss
 def update_memcache(key, filename):
     f_size = get_db_filesize(key)
     while memcache_stat['size'] + f_size > memcache_config['capacity']:
+        # keep removing entries from memcache until the item can fit into memcache
         replace_memcache()
 
-    memcache[key]['filename'] = filename
-    memcache[key]['timestamp'] = datetime.now()
+    memcache[key] = {
+        'filename': filename,
+        'timestamp': datetime.now()
+    }
     memcache_stat['num'] += 1
     memcache_stat['size'] += f_size
 

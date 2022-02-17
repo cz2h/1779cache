@@ -2,7 +2,7 @@ import os, base64
 from app import backendapp, memcache, memcache_stat, memcache_config
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from app.db_access import update_db_key_list, get_db, get_db_memcache_config
-from app.memcache_access import get_memcache, add_memcache, get_object_size, clr_memcache, del_memcache
+from app.memcache_access import get_memcache, add_memcache, clr_memcache, del_memcache
 from werkzeug.utils import secure_filename
 from config import Config
 
@@ -16,22 +16,30 @@ def allowed_file(filename):
 # refreshConfiguration function required by frontend
 @backendapp.before_first_request
 def get_memcache_config():
+    """ Get memcache configuration once at when the first request arrived"""
     get_db_memcache_config()
 
 
 @backendapp.route('/', methods=['POST', 'GET'])
 @backendapp.route('/index', methods=['POST'])
 def main():
+    """ Backend main debug page
+        !!!For Debugging Only!!!
+    """
     if request.method == 'POST':
         key = request.form.get('key')
         filename = get_memcache(key)
-        return redirect(url_for('download_file', name=filename))
+        if filename is not None:
+            return redirect(url_for('download_file', name=filename))
     return render_template("main.html")
 
 
 # list keys from database, and display as webpage
 @backendapp.route('/list_keys')
 def list_keys():
+    """ List all keys inside database.
+        !!!For Debugging Only!!!
+    """
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
     query = "SELECT * FROM Assignment_1.keylist"
@@ -40,6 +48,8 @@ def list_keys():
     return render_template("list_keys.html", rows=rows)
 
 
+"""
+# API required for auto testing, should be in frontend
 @backendapp.route('/api/list_keys', methods=['POST'])
 def list_keys_api():
     cnx = get_db()  # Create connection to db
@@ -62,20 +72,27 @@ def list_keys_api():
         success='true',
         keys=result
     )
+"""
 
 
 @backendapp.route('/list_keys_memcache')
 def list_keys_memcache():
-    # Retrieve all available keys from database
+    """ Retrieve all available keys from database
+        !!!For Debugging Only!!!
+    """
     return render_template("list_keys_memcache.html", memcache=memcache, memcache_stat=memcache_stat)
 
 
-# Put function required by frontend
 @backendapp.route('/put', methods=['POST'])
 def put():
+    """ Put function required by frontend
+        :param key: str
+        :param filename: str
+        :param file_size: str
+    """
     key = request.form.get('key')
     filename = request.form.get('value')
-    image_size = request.args.get('file_size')
+    image_size = request.form.get('file_size')
     if (key is not None) and (filename is not None) and (image_size is not None):
         add_memcache(key, filename, float(image_size))
         response = backendapp.response_class(
@@ -93,9 +110,11 @@ def put():
     return response
 
 
-# Get function required by frontend
 @backendapp.route('/get', methods=['POST'])
 def get():
+    """ Get function required by frontend
+
+    """
     key = request.form.get('key')
     value = get_memcache(key)
     if value is not None:
@@ -114,9 +133,11 @@ def get():
     return response
 
 
-# Clear memcache function required by frontend
 @backendapp.route('/clear', methods=['POST'])
 def clear():
+    """ Clear memcache function required by frontend
+
+    """
     clr_memcache()
     response = backendapp.response_class(
         response=json.dumps("OK"),
@@ -127,9 +148,11 @@ def clear():
     return response
 
 
-# InvalidateKey function required by frontend
 @backendapp.route('/invalidatekey', methods=['POST'])
 def invalidatekey():
+    """ InvalidateKey function required by frontend
+
+    """
     key = request.form.get('key')
     if key is not None:
         del_memcache(key)
@@ -150,6 +173,9 @@ def invalidatekey():
 
 @backendapp.route('/refreshconfiguration', methods=['POST'])
 def refreshconfiguration():
+    """ RefreshConfiguration function required by frontend
+
+    """
     get_db_memcache_config()
     response = backendapp.response_class(
         response=json.dumps("OK"),
@@ -161,6 +187,9 @@ def refreshconfiguration():
 
 @backendapp.route('/upload', methods=['GET', 'POST'])
 def image_upload():
+    """ Upload an image with a given key to the server
+        !!!For Debugging Only!!
+    """
     if request.method == 'GET':
         return render_template("upload.html")
 
@@ -190,11 +219,16 @@ def image_upload():
 
 @backendapp.route('/uploaded/<name>', methods=['GET', 'POST'])
 def download_file(name):
+    """ display an image for a given file name
+        !!!For Debugging Only!!
+    """
     root_dir = os.path.dirname(os.getcwd())
     print(name)
     return send_from_directory(os.path.join(root_dir, 'Lab1', 'image_library'), name)
 
 
+"""
+# API required for auto testing, should be in frontend
 @backendapp.route('/api/key/<key_value>', methods=['POST'])
 def send_image_api(key_value):
     root_dir = os.path.dirname(os.getcwd())
@@ -216,3 +250,4 @@ def send_image_api(key_value):
         success='true',
         content=base64_msg
     )
+"""

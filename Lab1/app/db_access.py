@@ -33,7 +33,7 @@ def get_db():
 
 
 # Add key, filename to database if not in DB, update existing row if key is there already
-def update_db_key_list(key, filename):
+def update_db_key_list(key, filename, image_size):
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
     query = "SELECT uniquekey FROM Assignment_1.keylist WHERE uniquekey = %s;"
@@ -41,13 +41,13 @@ def update_db_key_list(key, filename):
     row = cursor.fetchone()  # Retrieve the first row that contains the key
     # Check if database has the key
     if row is None:  # Key is not in database, add new entry
-        query = "INSERT INTO Assignment_1.keylist (uniquekey, filename) VALUE ( %s, %s);"
-        cursor.execute(query, (key, filename))
+        query = "INSERT INTO Assignment_1.keylist (uniquekey, filename, image_size) VALUE ( %s, %s, %s);"
+        cursor.execute(query, (key, filename, image_size))
         cnx.commit()
         print('Fresh key found! Adding new file ', filename, 'to DB')
     else:  # The given key is in database, update existing item
-        query = "UPDATE Assignment_1.keylist SET filename = %s WHERE uniquekey = %s;"
-        cursor.execute(query, (filename, key))
+        query = "UPDATE Assignment_1.keylist SET filename = %s, image_size = %s WHERE uniquekey = %s;"
+        cursor.execute(query, (filename, image_size, key))
         cnx.commit()
         print('Key found in DB! Updating new file name ', filename)
 
@@ -74,7 +74,7 @@ def get_db_filesize(key):
     :return: image file size: float
     """
     cursor = get_db().cursor()
-    query = "SELECT image_size FROM assignment_1.keylist WHERE uniquekey = %s;"
+    query = "SELECT image_size FROM Assignment_1.keylist WHERE uniquekey = %s;"
     cursor.execute(query, (key,))
     row = cursor.fetchone()
     if row is None:

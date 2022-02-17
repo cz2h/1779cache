@@ -7,12 +7,14 @@
         <tr>
             <th>Key</th>
             <th>File Name</th>
+            <th>File Size</th>
             <th>Options</th>
         </tr>
         {%for row in rows:%}
         <tr>
             <th>{{row[0]}}</th>
             <th>{{row[1]}}</th>
+            <th>{{row[2]}}</th>
             <th>
                 <form action="{{url_for('download_file', name=row[1])}}" method="post">
                     <input type="submit" value="view" />

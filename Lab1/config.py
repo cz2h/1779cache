@@ -7,8 +7,8 @@ class Config(object):
     ALLOWED_FORMAT = {'jpg', 'jpeg', 'png', 'gif', 'tiff'}
 
     DB_CONFIG = {
-        'user': 'root',
-        'password': 'Actonwang29',
+        'user': 'siyan',
+        'password': 'zhangsiyan123456',
         'host': 'localhost',
-        'database': 'assignment_1'
+        'database': 'Assignment_1'
     }
