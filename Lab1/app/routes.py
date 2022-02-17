@@ -19,7 +19,7 @@ def get_memcache_config():
     """ Get memcache configuration once at when the first request arrived"""
     get_db_memcache_config()
     # add the task to scheduler for memcache statistic data updates
-    scheduler.add_job(id='update_memcache_state', func=store_stats, trigger='interval', seconds=10)
+    scheduler.add_job(id='update_memcache_state', func=store_stats, trigger='interval', seconds=5)
 
 
 @backendapp.route('/', methods=['POST', 'GET'])

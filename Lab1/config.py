@@ -8,8 +8,8 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
     SCHEDULER_TIMEZONE = "America/Toronto"
     DB_CONFIG = {
-        'user': 'siyan',
-        'password': 'zhangsiyan123456',
+        'user': 'root',
+        'password': '',
         'host': 'localhost',
         'database': 'Assignment_1'
     }

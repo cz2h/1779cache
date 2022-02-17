@@ -14,11 +14,13 @@ memcache_stat = {}
 memcache_config = {}
 # memcache_config =  {'capacity': 10 (MB), 'rep_policy': 'LRU'}
 
-memcache_stat['num'] = 0        # total num of items in cache
-memcache_stat['hit'] = 0
-memcache_stat['mis'] = 0
-memcache_stat['total'] = 0      # total number of requests served
-memcache_stat['size'] = 0
+memcache_stat['num'] = 0        # Total num of items in cache
+memcache_stat['size'] = 0       # Total size of the content in memcache
+memcache_stat['total'] = 0      # Total number of requests served
+memcache_stat['hit'] = 0        # Total hit count
+memcache_stat['mis'] = 0        # Total missed count
+memcache_stat['hit_rate'] = 0   # Overall hit rate
+memcache_stat['mis_rate'] = 0   # Overall miss rate
 
 scheduler = APScheduler()
 scheduler.init_app(backendapp)

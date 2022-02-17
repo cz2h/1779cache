@@ -125,7 +125,6 @@ def get_memcache(key):
         return filename
 
 
-
 # Update the memcache entry retrieved from database after a miss
 def update_memcache(key, filename):
     f_size = get_db_filesize(key)
@@ -176,8 +175,8 @@ def store_stats():
     num_reqs = memcache_stat['total']
 
     # Get the miss/hit rate
-    mis_rate = memcache_stat['mis']
-    hit_rate = memcache_stat['hit']
+    mis_rate = memcache_stat['mis_rate']
+    hit_rate = memcache_stat['hit_rate']
 
     # Store stats into the database by appending row
     cnx = connect_to_database()
