@@ -18,6 +18,8 @@ def connect_to_database():
             print("Database does not exist")
         else:
             print(err)
+
+
 #    else:
 #        cnx.close()
 
@@ -59,10 +61,27 @@ def get_db_filename(key):
     row = cursor.fetchone()  # Retrieve the first row that contains the key
     # Check if database has the key
     if row is None:  # Key is not in database, add new entry
-        print('No key found in DB!')
+        print('Key not found in Memcache or DB!')
         return None
     else:  # The given key is in database, update existing item
         return row[0]
+
+
+def get_db_filesize(key):
+    """ Get the corresponding file size of an image given key from the database
+
+    :param key: the given key of the desired image size: str
+    :return: image file size: float
+    """
+    cursor = get_db().cursor()
+    query = "SELECT image_size FROM assignment_1.keylist WHERE uniquekey = %s;"
+    cursor.execute(query, (key,))
+    row = cursor.fetchone()
+    if row is None:
+        print("No key found in DB while searching image size with key in get_db_filesize, "
+              "adding memcache_failed and returned")
+        return None
+    return row[0]   # return the image size
 
 
 def get_db_memcache_config():

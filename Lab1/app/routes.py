@@ -75,8 +75,9 @@ def list_keys_memcache():
 def put():
     key = request.form.get('key')
     filename = request.form.get('value')
-    if (key is not None) and (filename is not None):
-        add_memcache(key, filename)
+    image_size = request.args.get('file_size')
+    if (key is not None) and (filename is not None) and (image_size is not None):
+        add_memcache(key, filename, float(image_size))
         response = backendapp.response_class(
             response=json.dumps("OK"),
             status=200,
@@ -113,7 +114,7 @@ def get():
     return response
 
 
-# Clear function required by frontend
+# Clear memcache function required by frontend
 @backendapp.route('/clear', methods=['POST'])
 def clear():
     clr_memcache()
@@ -160,13 +161,16 @@ def refreshconfiguration():
 
 @backendapp.route('/upload', methods=['GET', 'POST'])
 def image_upload():
+    if request.method == 'GET':
+        return render_template("upload.html")
+
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
         file = request.files['file']
-        print('filename = ' + str(file))
+        print('Filename = ' + str(file))
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == '':
@@ -176,10 +180,12 @@ def image_upload():
         if file and allowed_file(file.filename):
             key = request.form.get('key')
             filename = secure_filename(file.filename)
+            image_size = float(request.args.get('file_size'))
             file.save(os.path.join(backendapp.config['IMAGE_PATH'], filename))  # write to local file system
-            add_memcache(key, filename)  # add the key and file name to cache as well as database
+            add_memcache(key, filename, image_size)  # add the key and file name to cache as well as database
             return redirect(url_for('download_file', name=filename))
-    return render_template("upload.html")
+    else:
+        print("Method error in image_upload, wth are you doing??")
 
 
 @backendapp.route('/uploaded/<name>', methods=['GET', 'POST'])
