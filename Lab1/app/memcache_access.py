@@ -26,8 +26,9 @@ def lru_replace_memcache():
         for mem_key in memcache.keys():
             if memcache[mem_key]['timestamp'] == oldest_timestamp:
                 print('Key', mem_key, 'found!')
+                memcache_stat['size'] -= get_db_filesize(mem_key)
                 memcache.pop(mem_key)
-        memcache_stat['size'] -= get_db_filesize(mem_key)
+                return
     else:
         print("Error in replacement, can't pop anymore because memcache is already empty. ")
 
