@@ -32,7 +32,7 @@ def get_db():
     return db
 
 
-# update the database based on the given key and filename
+# Add key, filename to database if not in DB, update existing row if key is there already
 def update_db_key_list(key, filename):
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()

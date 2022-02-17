@@ -122,15 +122,11 @@ def update_memcache(key, filename):
     f_size = get_db_filesize(key)
     while memcache_stat['size'] + f_size > memcache_config['capacity']:
         replace_memcache()
-    # if (key is not None) and (filename is not None):
-    #     # Check the space of memcache before update it
-    #     if memcache_stat['size'] < memcache_config['capacity'] - get_entry_size(key, filename):
-    #         memcache[key] = {'filename': filename, 'timestamp': datetime.now()}
-    #         # Update the size after replacement
-    #         memcache_stat['size'] = get_object_size(memcache)
-    #     else:
-    #         print('MemCache is Full! Call for replacement routine!')
-    #         replace()
+
+    memcache[key]['filename'] = filename
+    memcache[key]['timestamp'] = datetime.now()
+    memcache_stat['num'] += 1
+    memcache_stat['size'] += f_size
 
 
 # Drop all entries from the memcache
