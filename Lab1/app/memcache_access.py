@@ -25,7 +25,6 @@ def lru_replace_memcache():
         # Find the key by value
         for mem_key in memcache.keys():
             if memcache[mem_key]['timestamp'] == oldest_timestamp:
-                print('Key', mem_key, 'found!')
                 memcache_stat['size'] -= get_db_filesize(mem_key)
                 memcache.pop(mem_key)
                 return
