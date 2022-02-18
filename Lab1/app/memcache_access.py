@@ -34,7 +34,8 @@ def lru_replace_memcache():
 
 def replace_memcache():
     """Execute a replacement policy specified by memcache_config['rep_policy']
-        This function will only pop from
+        This function will only pop from memcache, not the actual replacement.
+        New entry will be added by whoever called this function.
 
     :param key: str
     :param filename: str
