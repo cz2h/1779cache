@@ -22,8 +22,6 @@ memcache_stat['mis'] = 0        # Total missed count
 memcache_stat['hit_rate'] = 0   # Overall hit rate
 memcache_stat['mis_rate'] = 0   # Overall miss rate
 
-
-
 scheduler = APScheduler()
 scheduler.init_app(backendapp)
 scheduler.start()

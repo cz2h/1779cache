@@ -9,8 +9,8 @@ class Config(object):
     SCHEDULER_TIMEZONE = "America/Toronto"
     JOB_INTERVAL = 5  # interval for memcache statistic data updates(in seconds)
     DB_CONFIG = {
-        'user': 'siyan',
-        'password': 'zhangsiyan123456',
+        'user': 'root',
+        'password': '',
         'host': 'localhost',
         'database': 'Assignment_1'
     }
