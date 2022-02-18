@@ -125,7 +125,6 @@ def get_memcache(key):
         return filename
 
 
-
 # Update the memcache entry retrieved from database after a miss
 def update_memcache(key, filename):
     f_size = get_db_filesize(key)
@@ -167,6 +166,7 @@ def store_stats():
     :return: None
     """
     print('Start update memcache status!')
+    current_time = datetime.now()
     # Get the number of items in cache
     num_items = memcache_stat['num']
 
@@ -182,8 +182,8 @@ def store_stats():
     # Store stats into the database by appending row
     cnx = connect_to_database()
     cursor = cnx.cursor()
-    query = "INSERT INTO Assignment_1.cache_stats (num_items, total_size, num_reqs, mis_rate, hit_rate)" \
-            "VALUES (%s, %s, %s, %s, %s);"
-    cursor.execute(query, (num_items, total_size, num_reqs, mis_rate, hit_rate))
+    query = "INSERT INTO Assignment_1.cache_stats (num_items, total_size, num_reqs, mis_rate, hit_rate, time_stamp)" \
+            "VALUES (%s, %s, %s, %s, %s, %s);"
+    cursor.execute(query, (num_items, total_size, num_reqs, mis_rate, hit_rate, current_time))
     cnx.commit()
-    print('Status Saved! Current time is: ', datetime.now())
+    print('Status Saved! Timestamp is: ', current_time)

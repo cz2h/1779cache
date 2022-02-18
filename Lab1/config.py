@@ -7,6 +7,7 @@ class Config(object):
     ALLOWED_FORMAT = {'jpg', 'jpeg', 'png', 'gif', 'tiff'}
     SCHEDULER_API_ENABLED = True
     SCHEDULER_TIMEZONE = "America/Toronto"
+    JOB_INTERVAL = 5  # interval for memcache statistic data updates(in seconds)
     DB_CONFIG = {
         'user': 'siyan',
         'password': 'zhangsiyan123456',
