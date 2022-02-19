@@ -32,8 +32,15 @@ def get_db():
     return db
 
 
-# Add key, filename to database if not in DB, update existing row if key is there already
 def update_db_key_list(key, filename, image_size):
+    """
+    Add key, filename to database if not in DB, update existing row if key is there already
+    !!!For Debugging Only!!!
+    :param key: str
+    :param filename: str
+    :param image_size: float
+    :return:
+    """
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
     query = "SELECT uniquekey FROM Assignment_1.keylist WHERE uniquekey = %s;"
@@ -52,8 +59,14 @@ def update_db_key_list(key, filename, image_size):
         print('Key found in DB! Updating new file name ', filename)
 
 
-# get the corresponded file name of a given key from database
+
 def get_db_filename(key):
+    """
+    get the corresponded file name of a given key from database
+    !!!For Debugging Only!!!
+    :param key: str
+    :return: filename: str
+    """
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
     query = "SELECT filename FROM Assignment_1.keylist WHERE uniquekey = %s;"
@@ -69,7 +82,7 @@ def get_db_filename(key):
 
 def get_db_filesize(key):
     """ Get the corresponding file size of an image given key from the database
-
+    !!!For Debugging Only!!!
     :param key: the given key of the desired image size: str
     :return: image file size: float
     """
@@ -85,6 +98,11 @@ def get_db_filesize(key):
 
 
 def get_db_memcache_config():
+    """
+    retrieve the memcaceh configuration from database
+
+    :return:
+    """
     cnx = get_db()  # Create connection to db
     cursor = cnx.cursor()
     query = "SELECT * FROM Assignment_1.memcache_config"

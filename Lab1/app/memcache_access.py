@@ -1,4 +1,5 @@
-import os, random, sys, gc
+import random
+from sys import getsizeof
 from app import backendapp, memcache, memcache_stat, memcache_config
 from app.db_access import update_db_key_list, get_db_filename, get_db, get_db_filesize, connect_to_database
 from datetime import datetime
@@ -10,10 +11,12 @@ def random_replace_memcache():
     if bool(memcache):
         # Randomly chose one key to drop from memcache
         rand_key = random.choice(list(memcache.keys()))
+        memcache_stat['size'] -= memcache[rand_key]['size']
         memcache.pop(rand_key)
-        memcache_stat['size'] -= get_db_filesize(rand_key)
+        return True
     else:
         print("Error in replacement, can't pop anymore because memcache is already empty. ")
+        return False
 
 
 # LRU Replacement Policy
@@ -25,11 +28,12 @@ def lru_replace_memcache():
         # Find the key by value
         for mem_key in memcache.keys():
             if memcache[mem_key]['timestamp'] == oldest_timestamp:
-                memcache_stat['size'] -= get_db_filesize(mem_key)
+                memcache_stat['size'] -= memcache[mem_key]['size']
                 memcache.pop(mem_key)
-                return
+                return True
     else:
         print("Error in replacement, can't pop anymore because memcache is already empty. ")
+        return False
 
 
 def replace_memcache():
@@ -41,20 +45,21 @@ def replace_memcache():
     :param filename: str
     :return: None
     """
+    succeed = False
     if memcache_config['rep_policy'] == 'RANDOM':
-        random_replace_memcache()
+        succeed =random_replace_memcache()
     elif memcache_config['rep_policy'] == 'LRU':
-        lru_replace_memcache()
+        succeed =lru_replace_memcache()
+    # make sure no error happened during pop
+    if succeed is True:
+        memcache_stat['num'] -= 1
 
-    memcache_stat['num'] -= 1
 
-
-# Update the memcache statistic data
 def update_memcache_stat(missed):
     """Keep in mind this function does NOT update 'num' or 'size' of memcache
         which makes it usable for missed situations
 
-    :param missed: Bool
+    :param missed: bool
     :return: None
     """
     if missed:
@@ -66,7 +71,7 @@ def update_memcache_stat(missed):
     memcache_stat['hit_rate'] = memcache_stat['hit'] / memcache_stat['total']
 
 
-def add_memcache(key, filename, image_size):
+def add_memcache(key, file):
     """Update the memcache and related statistic, request access to database when a miss happened
 
     :param key: str
@@ -74,13 +79,18 @@ def add_memcache(key, filename, image_size):
     :param image_size: float
     :return: None
     """
+    image_size = getsizeof(file) / 1024 / 1024  # converts the image size to MB
+    # check if image can be fit into the memcache before everything else
+    if image_size > memcache_config['capacity']:
+        print('The given file is exceeded the capacity of the memcache')
+        return False
+
     # If the key existed in Memcache, we need to update the size by subtracting by the old file size
     if key in memcache.keys():
-        old_file_size = get_db_filesize(key)
+        old_file_size = memcache[key]['size']
         if old_file_size is None:   # memcache & DB inconsistency, found in memcache but not in DB
             print("Returning in add_memcache, old file not found. Key in memcache = %d")
-            return
-
+            return False
         # Update memcache statistic('num' in cache is not changing yet b/c we don't need to pop that entry)
         memcache_stat['size'] -= old_file_size
 
@@ -88,23 +98,32 @@ def add_memcache(key, filename, image_size):
     # Keep popping until we have enough space in memcache for the new image
     while memcache_stat['size'] + image_size > memcache_config['capacity']:
         replace_memcache()   # stats are updated inside
+
     if key in memcache.keys():
-        memcache[key]['filename'] = filename  # update/add it to memcache
+        memcache[key]['file'] = file            # update/add it to memcache
+        memcache[key]['size'] = image_size      # update the new file size
         memcache[key]['timestamp'] = datetime.now()
     else:
+        # add new entry if kay doesn't exist
         memcache[key] = {
-            'filename': filename,
+            'file': file,
+            'size': image_size,
             'timestamp': datetime.now()
         }
     # Insert file info to the database(auto-replace previous entry in DB)
-    update_db_key_list(key, filename, image_size)
+    # update_db_key_list(key, filename, image_size)
     # Update the size after replacement(not updating 'num' b/c we are just replacing)
     memcache_stat['size'] += image_size
+    return True
 
 
-# Get the corresponded file name with a given key in memcache
-# It calls database if a memcache miss happened
 def get_memcache(key):
+    """
+    Get the corresponded file content in base64 with a given key in memcache
+
+    :param key: str
+    :return: file: str
+    """
     if key is None:
         return None
 
@@ -112,10 +131,12 @@ def get_memcache(key):
         # memcache hit, update statistic and request time
         update_memcache_stat(missed=False)
         memcache[key]['timestamp'] = datetime.now()
-        return memcache[key]['filename']
+        return memcache[key]['file']
     else:
         # memcache miss, update statistic
         update_memcache_stat(missed=True)
+        return None
+        """
         # check database
         filename = get_db_filename(key)
         # add entry back to memcache
@@ -124,8 +145,10 @@ def get_memcache(key):
         else:
             print('Key is not found!')
         return filename
+        """
 
 
+"""
 # Update the memcache entry retrieved from database after a miss
 def update_memcache(key, filename):
     f_size = get_db_filesize(key)
@@ -139,7 +162,7 @@ def update_memcache(key, filename):
     }
     memcache_stat['num'] += 1
     memcache_stat['size'] += f_size
-
+"""
 
 # Drop all entries from the memcache
 def clr_memcache():
@@ -151,11 +174,12 @@ def clr_memcache():
 # Delete a given key from memcache
 def del_memcache(key):
     if (key is not None) and (key in memcache.keys()):
+        memcache_stat['size'] -= memcache[key]['size']
         memcache.pop(key)
-        memcache_stat['size'] -= get_db_filesize(key)
+        return True
     else:
         print('Error in del_memcache, Key not found in memcache.')
-
+        return False
 
 # Called by run.py threading directly
 def store_stats():

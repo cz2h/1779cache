@@ -9,7 +9,7 @@ global memcache_config
 
 backendapp = Flask(__name__)
 
-memcache = {}       # memcache = { key: {'filename': f_name, 'timestamp': time_stamp} }
+memcache = {}       # memcache = { key: {'file': b64encoded file, 'size': size(Byte),'timestamp': time_stamp} }
 memcache_stat = {}
 memcache_config = {}
 # memcache_config =  {'capacity': 10 (MB), 'rep_policy': 'LRU'}

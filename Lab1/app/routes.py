@@ -1,4 +1,6 @@
-import os, base64
+import os, io
+from base64 import b64encode, b64decode
+from sys import getsizeof
 from app import backendapp, memcache, memcache_stat, memcache_config, scheduler
 from flask import render_template, url_for, request, flash, redirect, send_from_directory, json, jsonify
 from app.db_access import update_db_key_list, get_db, get_db_memcache_config
@@ -7,8 +9,12 @@ from werkzeug.utils import secure_filename
 from config import Config
 
 
-# Check if uploaded file extension is acceptable
 def allowed_file(filename):
+    """
+    # Check if uploaded file extension is acceptable
+    :param filename: str
+    :return: T/F
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in backendapp.config['ALLOWED_FORMAT']
 
@@ -31,9 +37,10 @@ def main():
     """
     if request.method == 'POST':
         key = request.form.get('key')
-        filename = get_memcache(key)
-        if filename is not None:
-            return redirect(url_for('download_file', name=filename))
+        file = get_memcache(key)
+        if file is not None:
+            return render_template("image_viewer.html", img_data=file)
+
     return render_template("main.html")
 
 
@@ -89,48 +96,38 @@ def list_keys_memcache():
 @backendapp.route('/put', methods=['POST'])
 def put():
     """ Put function required by frontend
+        add an image to memcache with a given key
         :param key: str
         :param filename: str
         :param file_size: str
     """
     key = request.form.get('key')
-    filename = request.form.get('value')
-    image_size = request.form.get('file_size')
-    if (key is not None) and (filename is not None) and (image_size is not None):
-        add_memcache(key, filename, float(image_size))
-        response = backendapp.response_class(
-            response=json.dumps("OK"),
-            status=200,
-            mimetype='application/json'
-        )
-    else:
-        response = backendapp.response_class(
-            response=json.dumps("Bad Request"),
-            status=400,
-            mimetype='application/json'
-        )
-
+    file = request.form.get('value')
+    response = jsonify(
+        success='True'
+    )
+    if (key is not None) and (file is not None):
+        if add_memcache(key, file, getsizeof(file)) is True:
+            response = jsonify(
+                success='False'
+            )
     return response
 
 
 @backendapp.route('/get', methods=['POST'])
 def get():
     """ Get function required by frontend
-
+        Return an image stored in memcache
     """
     key = request.form.get('key')
     value = get_memcache(key)
     if value is not None:
-        response = backendapp.response_class(
-            response=json.dumps(value),
-            status=200,
-            mimetype='application/json'
+        response = jsonify(
+            content=value
         )
     else:
-        response = backendapp.response_class(
-            response=json.dumps("Unknown key"),
-            status=400,
-            mimetype='application/json'
+        response = jsonify(
+            content='None'
         )
 
     return response
@@ -142,12 +139,9 @@ def clear():
 
     """
     clr_memcache()
-    response = backendapp.response_class(
-        response=json.dumps("OK"),
-        status=200,
-        mimetype='application/json'
+    response = jsonify(
+        success='True'
     )
-
     return response
 
 
@@ -157,19 +151,14 @@ def invalidatekey():
 
     """
     key = request.form.get('key')
+    response = jsonify(
+        success='False'
+    )
     if key is not None:
-        del_memcache(key)
-        response = backendapp.response_class(
-            response=json.dumps("OK"),
-            status=200,
-            mimetype='application/json'
-        )
-    else:
-        response = backendapp.response_class(
-            response=json.dumps("Unknown key"),
-            status=400,
-            mimetype='application/json'
-        )
+        if del_memcache(key) is True:
+            response = jsonify(
+                success='True'
+            )
 
     return response
 
@@ -180,10 +169,8 @@ def refreshconfiguration():
 
     """
     get_db_memcache_config()
-    response = backendapp.response_class(
-        response=json.dumps("OK"),
-        status=200,
-        mimetype='application/json'
+    response = jsonify(
+        success='True'
     )
     return response
 
@@ -212,22 +199,19 @@ def image_upload():
         if file and allowed_file(file.filename):
             key = request.form.get('key')
             filename = secure_filename(file.filename)
-            image_size = float(request.args.get('file_size'))
-            file.save(os.path.join(backendapp.config['IMAGE_PATH'], filename))  # write to local file system
-            add_memcache(key, filename, image_size)  # add the key and file name to cache as well as database
-            return redirect(url_for('download_file', name=filename))
+            file_path = os.path.join(backendapp.config['IMAGE_PATH'], filename)
+            file.save(file_path)  # write to local file system
+            with open(file_path, "rb") as image_file:
+                encoded_image = b64encode(image_file.read()).decode('utf-8')
+            add_memcache(key, encoded_image)  # add the key and file name to cache as well as database
+            return render_template("image_viewer.html", img_data=memcache[key]['file'])
     else:
         print("Method error in image_upload, wth are you doing??")
 
 
-@backendapp.route('/uploaded/<name>', methods=['GET', 'POST'])
-def download_file(name):
-    """ display an image for a given file name
-        !!!For Debugging Only!!
-    """
-    root_dir = os.path.dirname(os.getcwd())
-    print(name)
-    return send_from_directory(os.path.join(root_dir, 'Lab1', 'image_library'), name)
+@backendapp.route('/image/<key>', methods=['GET', 'POST'])
+def view_image(key):
+    return render_template("image_viewer.html", img_data=memcache[key]['file'])
 
 
 """

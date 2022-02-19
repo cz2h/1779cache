@@ -28,17 +28,17 @@
     <table style="width:50%">
         <tr>
             <th>Key</th>
-            <th>File Name</th>
+            <th>File Size</th>
             <th>Request Time</th>
             <th>Options</th>
         </tr>
         {%for key in memcache:%}
         <tr>
             <th>{{key}}</th>
-            <th>{{memcache[key]['filename']}}</th>
+            <th>{{memcache[key]['size']}}</th>
             <th>{{memcache[key]['timestamp']}}</th>
             <th>
-                <form action="{{url_for('download_file', name=memcache[key]['filename'])}}" method="post">
+                <form action="{{url_for('view_image', key=key)}}" method="post">
                     <input type="submit" value="view" />
                 </form>
             </th>
