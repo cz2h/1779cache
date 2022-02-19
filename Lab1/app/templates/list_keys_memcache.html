@@ -19,9 +19,9 @@
             <th>{{memcache_stat['mis']}}</th>
             <th>{{memcache_stat['hit']}}</th>
             <th>{{memcache_stat['total']}}</th>
-            <th>{{memcache_stat['mis_rate']}}</th>
-            <th>{{memcache_stat['hit_rate']}}</th>
-            <th>{{memcache_stat['size']}}</th>
+            <th>{{'%0.2f'| format(memcache_stat['mis_rate']|float)}}</th>
+            <th>{{'%0.2f'| format(memcache_stat['hit_rate']|float)}}</th>
+            <th>{{'%0.4f'| format(memcache_stat['size']|float)}}</th>
         </tr>
     </table>
 <h2>Content</h2>

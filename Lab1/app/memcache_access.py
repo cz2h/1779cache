@@ -47,9 +47,9 @@ def replace_memcache():
     """
     succeed = False
     if memcache_config['rep_policy'] == 'RANDOM':
-        succeed =random_replace_memcache()
+        succeed = random_replace_memcache()
     elif memcache_config['rep_policy'] == 'LRU':
-        succeed =lru_replace_memcache()
+        succeed = lru_replace_memcache()
     # make sure no error happened during pop
     if succeed is True:
         memcache_stat['num'] -= 1
@@ -105,6 +105,7 @@ def add_memcache(key, file):
         memcache[key]['timestamp'] = datetime.now()
     else:
         # add new entry if kay doesn't exist
+        memcache_stat['num'] += 1
         memcache[key] = {
             'file': file,
             'size': image_size,
