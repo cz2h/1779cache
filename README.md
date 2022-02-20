@@ -1,5 +1,5 @@
-# 1779frontend
-Front end flask server code
+# 1779backend
+Back end flask server code
 
 # Project structure
 
