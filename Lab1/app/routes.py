@@ -107,7 +107,7 @@ def put():
         success='True'
     )
     if (key is not None) and (file is not None):
-        if add_memcache(key, file, getsizeof(file)) is True:
+        if add_memcache(key, file) is True:
             response = jsonify(
                 success='False'
             )

@@ -40,10 +40,6 @@ def replace_memcache():
     """Execute a replacement policy specified by memcache_config['rep_policy']
         This function will only pop from memcache, not the actual replacement.
         New entry will be added by whoever called this function.
-
-    :param key: str
-    :param filename: str
-    :return: None
     """
     succeed = False
     if memcache_config['rep_policy'] == 'RANDOM':
@@ -75,11 +71,11 @@ def add_memcache(key, file):
     """Update the memcache and related statistic, request access to database when a miss happened
 
     :param key: str
-    :param filename: str
-    :param image_size: float
+    :param file: str
     :return: None
     """
-    image_size = getsizeof(file) / 1024 / 1024  # converts the image size to MB
+    # converts the image size to MB. There is 49 Bytes of overhead in string object
+    image_size = (getsizeof(file) - 49) / 1024 / 1024
     # check if image can be fit into the memcache before everything else
     if image_size > memcache_config['capacity']:
         print('The given file is exceeded the capacity of the memcache')
@@ -137,16 +133,6 @@ def get_memcache(key):
         # memcache miss, update statistic
         update_memcache_stat(missed=True)
         return None
-        """
-        # check database
-        filename = get_db_filename(key)
-        # add entry back to memcache
-        if filename is not None:
-            update_memcache(key, filename)
-        else:
-            print('Key is not found!')
-        return filename
-        """
 
 
 """
@@ -165,6 +151,7 @@ def update_memcache(key, filename):
     memcache_stat['size'] += f_size
 """
 
+
 # Drop all entries from the memcache
 def clr_memcache():
     memcache.clear()
@@ -181,6 +168,7 @@ def del_memcache(key):
     else:
         print('Error in del_memcache, Key not found in memcache.')
         return False
+
 
 # Called by run.py threading directly
 def store_stats():
